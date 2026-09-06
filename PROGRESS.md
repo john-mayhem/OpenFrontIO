@@ -14,6 +14,12 @@ Fork of [openfrontio/OpenFrontIO](https://github.com/openfrontio/OpenFrontIO), r
 
 - **Stack overflow at high city/player counts**: `Worker drain failed: RangeError: Maximum call stack size exceeded at addExecution`. Root cause: `GameRunner` spread execution arrays into `Game.addExecution`'s rest params (`addExecution(...bigArray)`) — V8 throws once a spread call gets into the ~100k-200k argument range, which `execManager.createExecs()` (every tick) and the init-time `nationExecutions()`/`spawnPlayers()`/`spawnTribes()` calls can hit on large maps. Fixed by adding `Game.addExecutions(execs: Execution[])`, which appends via a loop instead of spreading, and switching those four call sites to it. Single-execution call sites (the vast majority) are untouched. Commit `4f5d333`.
 
+## Balance tweaks (2026-09-06)
+
+- **Trade ship spawn throttle midpoint raised 400 → 10,000**: `Config.tradeShipSpawnRate`'s spawn-probability sigmoid is keyed on the *global* trade ship count (all players/bots), not per-port. At the upstream midpoint of 400, a large stacked-port setup (400+ ports, level 1000+) sat in the suppressed tail and building/leveling further had no visible effect — the pity-timer's guaranteed-spawn threshold grows exponentially with ship count while a port's rolls-per-check only grows linearly with level. Same curve shape, recentered at 10,000. Ship count is a global stat (`GameImpl.unitCount()`), so this affects the whole map, not just one player. Commit `4fb3b3a`.
+  - No hard caps on trade ships or warships exist anywhere in the codebase (warship cost instead scales to a flat 1M gold/ship past your 3rd). Transport ships (invasion boats) *do* have a real hard cap: `Config.boatMaxNumber()` = 3 concurrent per player, untouched so far.
+  - All ship types (trade/transport/warship) move at the same fixed speed: 1 map tile per 100ms tick. No per-type speed differences exist in the sim.
+
 ## Upstream PRs pulled in
 
 - **[#5180](https://github.com/openfrontio/OpenFrontIO/pull/5180) — Map info button** (2026-09-06): hover "?" button on map cards showing map info + designer credits, sourced from new optional `info`/`designers` fields on the map manifest. Client-only.
