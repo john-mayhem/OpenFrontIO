@@ -480,8 +480,12 @@ export class Config {
   ): number {
     const decayRate = Math.LN2 / 50;
 
-    // Approaches 0 as numTradeShips increase
-    const baseSpawnRate = 1 - sigmoid(numTradeShips, decayRate, 400);
+    // Approaches 0 as numTradeShips increase. Midpoint raised from upstream's
+    // 400 to 10,000 for this fork -- large stacked-port setups (400+ ports,
+    // level 1000+) were hitting the suppressed tail of the curve at upstream's
+    // midpoint and seeing what looked like a fixed ship count no matter how
+    // much was built. Same curve shape, just centered much further out.
+    const baseSpawnRate = 1 - sigmoid(numTradeShips, decayRate, 10_000);
 
     // Pity timer: increases spawn chance after consecutive rejections
     const rejectionModifier = 1 / (tradeShipSpawnRejections + 1);
