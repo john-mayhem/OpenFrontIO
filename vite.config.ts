@@ -333,6 +333,9 @@ export default defineConfig(({ mode }) => {
       host: process.env.VITE_HOST === "lan",
       // Automatically open the browser when the server starts
       open: process.env.SKIP_BROWSER_OPEN !== "true",
+      // Local nginx reverse proxy sends Host: openfront.lan, which Vite
+      // rejects by default as a DNS-rebinding guard.
+      allowedHosts: ["openfront.lan"],
       proxy: {
         "/lobbies": {
           target: "ws://localhost:3000",
