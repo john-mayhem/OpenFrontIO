@@ -242,14 +242,14 @@ export class Config {
     private _spectator: boolean = false,
   ) {
     for (let level = 1; level < 256; level++) {
-      this._factoryMultCache[level] = 1 + 0.25 * (1 - pow(0.85, level - 1));
+      this._factoryMultCache[level] = 1.0 + 0.4 * (log(level) * Math.LOG2E);
       this._stationMultCache[level] = 1.0 + 0.4 * (log(level) * Math.LOG2E);
     }
   }
 
   factoryStackMultiplier(level: number): number {
     if (level < 256) return this._factoryMultCache[level];
-    return 1.25;
+    return 1.0 + 0.4 * (log(level) * Math.LOG2E);
   }
 
   stationStackMultiplier(level: number): number {
