@@ -864,6 +864,8 @@ export interface Game extends GameMap {
   ): Array<{ unit: Unit; distSquared: number }>;
 
   addExecution(...exec: Execution[]): void;
+  // Bulk variant — use for arrays that can be large (spreading those into addExecution overflows the call stack).
+  addExecutions(execs: Execution[]): void;
   displayMessage(
     message: string,
     type: MessageType,

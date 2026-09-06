@@ -684,7 +684,13 @@ export class GameImpl implements Game {
   }
 
   addExecution(...exec: Execution[]) {
-    this.unInitExecs.push(...exec);
+    this.addExecutions(exec);
+  }
+
+  addExecutions(execs: Execution[]) {
+    for (let i = 0; i < execs.length; i++) {
+      this.unInitExecs.push(execs[i]);
+    }
   }
 
   removeExecution(exec: Execution) {

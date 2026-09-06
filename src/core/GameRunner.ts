@@ -109,14 +109,14 @@ export class GameRunner {
       this.game.addExecution(new SpawnTimerExecution());
     }
     if (this.game.config().spawnNations()) {
-      this.game.addExecution(...this.execManager.nationExecutions());
+      this.game.addExecutions(this.execManager.nationExecutions());
     }
     if (this.game.config().isRandomSpawn()) {
-      this.game.addExecution(...this.execManager.spawnPlayers());
+      this.game.addExecutions(this.execManager.spawnPlayers());
     }
     if (this.game.config().bots() > 0) {
-      this.game.addExecution(
-        ...this.execManager.spawnTribes(this.game.config().bots()),
+      this.game.addExecutions(
+        this.execManager.spawnTribes(this.game.config().bots()),
       );
     }
     this.game.addExecution(new WinCheckExecution());
@@ -143,8 +143,8 @@ export class GameRunner {
     }
     this.isExecuting = true;
 
-    this.game.addExecution(
-      ...this.execManager.createExecs(this.turns[this.currTurn]),
+    this.game.addExecutions(
+      this.execManager.createExecs(this.turns[this.currTurn]),
     );
     this.currTurn++;
 
