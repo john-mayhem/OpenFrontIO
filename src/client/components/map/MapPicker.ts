@@ -13,6 +13,7 @@ import {
 import { translateText } from "../../Utils";
 import "./MapDisplay";
 import { getFavoriteMaps, starIcon, toggleFavoriteMap } from "./MapFavorites";
+import { getMapSize } from "./MapSizes";
 const randomMap = assetUrl("images/RandomMap.webp");
 
 type MapTab = "featured" | "all" | "favorites";
@@ -44,6 +45,9 @@ export class MapPicker extends LitElement {
   @state() private activeTab: MapTab = "featured";
   @state() private expandedCategories: Set<string> = new Set();
   @state() private favorites: GameMapType[] = getFavoriteMaps();
+  @state() private sortBySize = false;
+  @state() private loadingSizes = false;
+  private mapLandTiles: Map<string, number> = new Map();
 
   createRenderRoot() {
     return this;
@@ -80,6 +84,32 @@ export class MapPicker extends LitElement {
       this.expandedCategories.size > 0
         ? new Set()
         : new Set(this.allCategories);
+  }
+
+  private async toggleSortBySize() {
+    if (this.sortBySize) {
+      this.sortBySize = false;
+      return;
+    }
+    if (this.mapLandTiles.size === 0) {
+      this.loadingSizes = true;
+      const entries = await Promise.all(
+        maps.map(
+          async (m) => [m.id, (await getMapSize(m.id))?.landTiles ?? 0] as const,
+        ),
+      );
+      this.mapLandTiles = new Map(entries);
+      this.loadingSizes = false;
+    }
+    this.sortBySize = true;
+  }
+
+  private applySizeSort(mapList: MapInfo[]): MapInfo[] {
+    if (!this.sortBySize || this.mapLandTiles.size === 0) return mapList;
+    return [...mapList].sort(
+      (a, b) =>
+        (this.mapLandTiles.get(b.id) ?? 0) - (this.mapLandTiles.get(a.id) ?? 0),
+    );
   }
 
   private preventImageDrag(event: DragEvent) {
@@ -120,6 +150,7 @@ export class MapPicker extends LitElement {
   }
 
   private renderMapGrid(mapList: MapInfo[]) {
+    const sortedList = this.applySizeSort(mapList);
     // Keyed by map so cards keep their identity when the list shifts
     // (e.g. the selected map gets prepended to the featured grid) —
     // positional reuse would leave stale thumbnails behind.
@@ -127,7 +158,7 @@ export class MapPicker extends LitElement {
       class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
     >
       ${repeat(
-        mapList,
+        sortedList,
         (map) => map.id,
         (map) => this.renderMapCard(map),
       )}
@@ -233,6 +264,40 @@ export class MapPicker extends LitElement {
     </div>`;
   }
 
+  private renderSortToggle() {
+    return html`<div
+      class="shrink-0 rounded-xl border border-white/10 bg-black/20 p-1"
+    >
+      <button
+        type="button"
+        aria-pressed=${this.sortBySize}
+        title=${translateText("map_component.sort_by_size")}
+        @click=${() => this.toggleSortBySize()}
+        ?disabled=${this.loadingSizes}
+        class="h-full flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all active:scale-95 ${this
+          .sortBySize
+          ? "bg-malibu-blue/20 text-white"
+          : "text-white/60 hover:text-white"} ${this.loadingSizes
+          ? "opacity-50 cursor-wait"
+          : ""}"
+      >
+        <svg
+          class="w-3 h-3 shrink-0"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            d="M3 12h2v-4H3v4zm4 0h2V6H7v6zm4 0h2V2h-2v10z"
+          />
+        </svg>
+        <span class="hidden sm:inline">
+          ${translateText("map_component.sort_by_size")}
+        </span>
+      </button>
+    </div>`;
+  }
+
   private renderFavoritesTab() {
     if (this.favorites.length === 0) {
       return html`<div
@@ -332,6 +397,7 @@ export class MapPicker extends LitElement {
                   )}
                 </div>
                 ${this.activeTab === "all" ? this.renderExpandToggle() : null}`}
+          ${this.renderSortToggle()}
         </div>
         ${isSearching ? this.renderSearchResults() : this.renderActiveTab()}
         <div

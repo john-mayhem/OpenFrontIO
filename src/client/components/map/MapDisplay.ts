@@ -4,6 +4,7 @@ import { Difficulty, GameMapType } from "../../../core/game/Game";
 import { terrainMapFileLoader } from "../../TerrainMapFileLoader";
 import { translateText } from "../../Utils";
 import { starIcon } from "./MapFavorites";
+import { formatLandTiles, getMapSize, MapSize } from "./MapSizes";
 import { MEDAL_ORDER, medalIcon } from "./Medals";
 
 @customElement("map-display")
@@ -21,6 +22,7 @@ export class MapDisplay extends LitElement {
   @state() private hasNations = true;
   @state() private mapInfo: string | null = null;
   @state() private mapDesigners: string[] = [];
+  @state() private mapSize: MapSize | null = null;
   private observer: IntersectionObserver | null = null;
   private dataLoaded = false;
   private infoTooltipEl: HTMLDivElement | null = null;
@@ -80,6 +82,7 @@ export class MapDisplay extends LitElement {
         Array.isArray(manifest.nations) && manifest.nations.length > 0;
       this.mapInfo = manifest.info ?? null;
       this.mapDesigners = manifest.designers ?? [];
+      this.mapSize = await getMapSize(this.mapKey);
     } catch (error) {
       console.error("Failed to load map data:", error);
     } finally {
@@ -155,6 +158,11 @@ export class MapDisplay extends LitElement {
     el.style.top = `${rect.bottom + 4}px`;
     el.style.right = `${window.innerWidth - rect.right}px`;
     el.replaceChildren();
+    if (this.mapSize) {
+      const sizeLine = document.createElement("div");
+      sizeLine.textContent = `${translateText("map_component.dimensions")} ${this.mapSize.width}×${this.mapSize.height}`;
+      el.appendChild(sizeLine);
+    }
     if (this.mapInfo) {
       const infoLine = document.createElement("div");
       infoLine.textContent = `${translateText("map_component.info")} ${this.mapInfo}`;
@@ -174,6 +182,16 @@ export class MapDisplay extends LitElement {
   private handleInfoTooltipHide() {
     this.infoTooltipEl?.remove();
     this.infoTooltipEl = null;
+  }
+
+  private renderSizeBadge() {
+    if (!this.mapSize) return null;
+    return html`<div
+      class="pointer-events-none absolute bottom-1.5 left-1.5 z-10 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-bold text-white/80 ring-1 ring-white/20"
+      title=${translateText("map_component.land_tiles")}
+    >
+      ${formatLandTiles(this.mapSize.landTiles)}
+    </div>`;
   }
 
   private renderInfoButton() {
@@ -232,6 +250,7 @@ export class MapDisplay extends LitElement {
                   />
                 </div>
                 ${this.renderFavoriteButton()} ${this.renderInfoButton()}
+                ${this.renderSizeBadge()}
               </div>`
             : html`<div
                 class="w-full aspect-[2/1] text-red-400 transition-transform duration-200 rounded-lg bg-red-500/10 text-xs font-bold uppercase tracking-wider flex items-center justify-center"
