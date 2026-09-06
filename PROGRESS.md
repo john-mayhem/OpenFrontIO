@@ -17,6 +17,7 @@ Fork of [openfrontio/OpenFrontIO](https://github.com/openfrontio/OpenFrontIO), r
 ## Upstream PRs pulled in
 
 - **[#5180](https://github.com/openfrontio/OpenFrontIO/pull/5180) — Map info button** (2026-09-06): hover "?" button on map cards showing map info + designer credits, sourced from new optional `info`/`designers` fields on the map manifest. Client-only.
+- **[#5264](https://github.com/openfrontio/OpenFrontIO/pull/5264) — Train income scales with structure levels** (2026-09-06): city/station side `1.0 + 0.4*log2(level)` (unbounded), factory side same formula (**fork tweak** — upstream capped factories at 1.25x/~level 50; raised here to uncapped log2 since this fork has no multiplayer balance to protect and the playstyle here pushes factory levels well past 50). Both use `DetMath`'s deterministic `pow`/`log`, not raw `Math.*`, so no desync risk. Also fixed 6 pre-existing `NationStructureBehavior.test.ts` failures (stale mocks missing `level()`/`stationStackMultiplier()`). To retune further, edit the `0.4` coefficient (or the formula shape) in `Config.ts`'s `factoryStackMultiplier`/`stationStackMultiplier`.
 
 ## Next
 
